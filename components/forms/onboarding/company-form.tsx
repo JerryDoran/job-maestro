@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { companySchema } from '@/lib/zod-schemas';
@@ -23,8 +26,14 @@ import {
 import { countryList } from '@/lib/countries';
 import { Textarea } from '@/components/ui/textarea';
 import { UploadDropzone } from '@/components/shared/uploadthing';
+import { createCompany } from '@/actions';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function CompanyForm() {
+  const [pending, setPending] = useState(false);
+
   const form = useForm<z.infer<typeof companySchema>>({
     resolver: zodResolver(companySchema),
     defaultValues: {
@@ -36,9 +45,24 @@ export default function CompanyForm() {
       xAccount: '',
     },
   });
+
+  async function onSubmit(data: z.infer<typeof companySchema>) {
+    console.log(data);
+    try {
+      setPending(true);
+      await createCompany(data);
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
+        console.log('[ERROR]: Something went wrong!');
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <Form {...form}>
-      <form className='space-y-6'>
+      <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit)}>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
           <FormField
             control={form.control}
@@ -143,23 +167,51 @@ export default function CompanyForm() {
             <FormItem>
               <FormLabel>Company Logo</FormLabel>
               <FormControl>
-                <UploadDropzone
-                  endpoint='imageUploader'
-                  onClientUploadComplete={(res) => {
-                    // Do something with the response
-                    field.onChange(res[0].ufsUrl);
-                  }}
-                  onUploadError={(error: Error) => {
-                    // Do something with the error.
-                    alert(`ERROR! ${error.message}`);
-                  }}
-                  className='ut-button:bg-primary ut-button:text-white ut-button:hover:bg-primary/80 ut-label:text-muted-foreground ut-allowed-content:text-muted-foreground border-primary'
-                />
+                <div>
+                  {field.value ? (
+                    <div className='relative w-fit'>
+                      <Image
+                        src={field.value}
+                        alt='logo'
+                        width={100}
+                        height={100}
+                        className='object-contain rounded-lg'
+                      />
+                    </div>
+                  ) : (
+                    <UploadDropzone
+                      endpoint='imageUploader'
+                      onClientUploadComplete={(res) => {
+                        // Do something with the response
+                        field.onChange(res[0].ufsUrl);
+                      }}
+                      onUploadError={(error: Error) => {
+                        // Do something with the error.
+                        alert(`ERROR! ${error.message}`);
+                      }}
+                      className='ut-button:bg-primary ut-button:text-white ut-button:hover:bg-primary/80 ut-label:text-muted-foreground ut-allowed-content:text-muted-foreground border-primary'
+                    />
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        <Button
+          type='submit'
+          disabled={pending}
+          className='w-full text-white font-semibold text-base'
+        >
+          {pending ? (
+            <>
+              <Loader2 className='animate-spin size-4' />
+              <span>Submitting...</span>
+            </>
+          ) : (
+            'Submit'
+          )}
+        </Button>
       </form>
     </Form>
   );
