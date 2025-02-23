@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { companySchema } from '@/lib/zod-schemas';
 import { z } from 'zod';
@@ -28,8 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { UploadDropzone } from '@/components/shared/uploadthing';
 import { createCompany } from '@/actions';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, XIcon } from 'lucide-react';
 
 export default function CompanyForm() {
   const [pending, setPending] = useState(false);
@@ -46,11 +46,11 @@ export default function CompanyForm() {
     },
   });
 
-  async function onSubmit(data: z.infer<typeof companySchema>) {
-    console.log(data);
+  async function onSubmit(values: z.infer<typeof companySchema>) {
+   
     try {
       setPending(true);
-      await createCompany(data);
+      await createCompany(values);
     } catch (error) {
       if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
         console.log('[ERROR]: Something went wrong!');
@@ -79,7 +79,7 @@ export default function CompanyForm() {
           />
           <FormField
             control={form.control}
-            name='name'
+            name='location'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Location</FormLabel>
@@ -177,6 +177,15 @@ export default function CompanyForm() {
                         height={100}
                         className='object-contain rounded-lg'
                       />
+                      <Button
+                        type='button'
+                        variant='destructive'
+                        size='icon'
+                        className='absolute -top-2 -right-2'
+                        onClick={() => field.onChange('')}
+                      >
+                        <XIcon className='size-2' />
+                      </Button>
                     </div>
                   ) : (
                     <UploadDropzone
@@ -209,7 +218,7 @@ export default function CompanyForm() {
               <span>Submitting...</span>
             </>
           ) : (
-            'Submit'
+            'Continue'
           )}
         </Button>
       </form>
