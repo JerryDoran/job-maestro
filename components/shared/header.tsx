@@ -1,8 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
-import { auth, signOut } from '@/lib/auth';
+import { auth } from '@/lib/auth';
+import UserDropdown from '@/components/shared/user-dropdown';
 
 export default async function Header() {
   const session = await auth();
@@ -18,32 +19,25 @@ export default async function Header() {
           </span>
         </h1>
       </Link>
-      <div className='flex items-center gap-4'>
+
+      {/* Desktop Naviagtion */}
+      <div className='hidden md:flex items-center gap-4'>
         <ThemeToggle />
+        <Link className={buttonVariants({ size: 'default' })} href='/post-job'>
+          Post Job
+        </Link>
         {session?.user ? (
-          <form
-            action={async () => {
-              'use server';
-              await signOut({ redirectTo: '/' });
-            }}
-          >
-            <Button
-              variant='outline'
-              className='text-white bg-gradient-to-br from-green-600  to-green-500 transition hover:opacity-90'
-            >
-              Sign Out
-            </Button>
-          </form>
+          <UserDropdown
+            email={session.user.email as string}
+            name={session.user.name as string}
+            image={session.user.image as string}
+          />
         ) : (
           <Link
+            className={buttonVariants({ variant: 'outline', size: 'default' })}
             href='/login'
-            // className='text-white bg-gradient-to-br from-green-600 to-green-500 transition hover:opacity-90'
-            className={buttonVariants({
-              variant: 'outline',
-              size: 'lg',
-            })}
           >
-            Sign In
+            Login
           </Link>
         )}
       </div>
