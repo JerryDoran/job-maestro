@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import SalaryRangeSelector from '@/components/salary-range-selector';
 import JobDescriptionEditor from '@/components/rich-text-editor/job-editor';
+import BenefitsSelector from '../benefits-selector';
 
 export default function CreateJobForm() {
   const form = useForm<z.infer<typeof jobSchema>>({
@@ -159,6 +160,19 @@ export default function CreateJobForm() {
                   <FormLabel>Job Description</FormLabel>
                   <FormControl>
                     <JobDescriptionEditor field={field as any} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='benefits'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Benefits</FormLabel>
+                  <FormControl>
+                    <BenefitsSelector field={field as any} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
