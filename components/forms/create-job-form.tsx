@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
+import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { countryList } from '@/lib/countries';
 import { jobSchema } from '@/lib/zod-schemas';
@@ -27,6 +28,11 @@ import {
 import SalaryRangeSelector from '@/components/salary-range-selector';
 import JobDescriptionEditor from '@/components/rich-text-editor/job-editor';
 import BenefitsSelector from '../benefits-selector';
+import { Textarea } from '../ui/textarea';
+import { UploadDropzone } from '@/components/shared/uploadthing';
+import { XIcon } from 'lucide-react';
+import { Button } from '../ui/button';
+import ListingDurationSelector from '@/components/listing-duration-selector';
 
 export default function CreateJobForm() {
   const form = useForm<z.infer<typeof jobSchema>>({
@@ -55,7 +61,7 @@ export default function CreateJobForm() {
           <CardHeader>
             <CardTitle className='text-xl'>Job Information</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='space-y-6'>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4'>
               <FormField
                 control={form.control}
@@ -180,6 +186,180 @@ export default function CreateJobForm() {
             />
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-xl'>Company Information</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4'>
+              <FormField
+                control={form.control}
+                name='companyName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder='i.e. Google' />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='companyLocation'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Location</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select Location' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Worldwide</SelectLabel>
+                          <SelectItem value='worldwide'>
+                            <span className='pr-2'>🌍</span>
+                            <span>Worldwide / Remote</span>
+                          </SelectItem>
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Location</SelectLabel>
+                          {countryList.map((country) => (
+                            <SelectItem key={country.code} value={country.name}>
+                              <span>{country.flagEmoji}</span>
+                              <span className='pl-2'>{country.name}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4'>
+              <FormField
+                control={form.control}
+                name='companyWebsite'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Website</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder='i.e. https://google.com' />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='companyXAccount'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company X Account</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder='i.e. @google' />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name='companyDescription'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder='i.e. Search engine for the next generation...'
+                      className='min-h-[120px]'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='companyLogo'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Logo</FormLabel>
+                  <FormControl>
+                    <div>
+                      {field.value ? (
+                        <div className='relative w-fit'>
+                          <Image
+                            src={field.value}
+                            alt='logo'
+                            width={100}
+                            height={100}
+                            className='object-contain rounded-lg'
+                          />
+                          <Button
+                            type='button'
+                            variant='destructive'
+                            size='icon'
+                            className='absolute -top-2 -right-2'
+                            onClick={() => field.onChange('')}
+                          >
+                            <XIcon className='size-2' />
+                          </Button>
+                        </div>
+                      ) : (
+                        <UploadDropzone
+                          endpoint='imageUploader'
+                          onClientUploadComplete={(res) => {
+                            // Do something with the response
+                            field.onChange(res[0].ufsUrl);
+                          }}
+                          onUploadError={(error: Error) => {
+                            // Do something with the error.
+                            alert(`ERROR! ${error.message}`);
+                          }}
+                          className='ut-button:bg-primary ut-button:text-white ut-button:hover:bg-primary/80 ut-label:text-muted-foreground ut-allowed-content:text-muted-foreground border-primary'
+                        />
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-xl'>Listing Duration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name='listingDuration'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <ListingDurationSelector field={field as any} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+        <Button type='submit' className='w-full text-base text-white font-bold'>
+          Post job
+        </Button>
       </form>
     </Form>
   );
