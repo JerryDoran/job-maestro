@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import Image from 'next/image';
@@ -33,8 +34,26 @@ import { UploadDropzone } from '@/components/shared/uploadthing';
 import { XIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import ListingDurationSelector from '@/components/listing-duration-selector';
+import { createJob } from '@/actions';
 
-export default function CreateJobForm() {
+type CreateJobFormProps = {
+  companyLocation: string;
+  companyName: string;
+  companyDescription: string;
+  companyLogo: string;
+  companyWebsite: string;
+  companyXAccount: string | null;
+};
+
+export default function CreateJobForm({
+  companyDescription,
+  companyLocation,
+  companyName,
+  companyLogo,
+  companyWebsite,
+  companyXAccount,
+}: CreateJobFormProps) {
+  const [pending, setPending] = useState(false);
   const form = useForm<z.infer<typeof jobSchema>>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
@@ -46,17 +65,33 @@ export default function CreateJobForm() {
       jobDescription: '',
       listingDuration: 30,
       benefits: [],
-      companyName: '',
-      companyLocation: '',
-      companyLogo: '',
-      companyWebsite: '',
-      companyXAccount: '',
-      companyDescription: '',
+      companyName: companyName,
+      companyLocation: companyLocation,
+      companyLogo: companyLogo,
+      companyWebsite: companyWebsite,
+      companyXAccount: companyXAccount || '',
+      companyDescription: companyDescription,
     },
   });
+
+  async function onSubmit(data: z.infer<typeof jobSchema>) {
+    try {
+      setPending(true);
+      await createJob(data);
+    } catch (error) {
+      if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
+        console.log('[ERROR]: Something went wrong!');
+      }
+    } finally {
+      setPending(false);
+    }
+  }
   return (
     <Form {...form}>
-      <form className='col-span-1 lg:col-span-2 flex flex-col gap-8' action=''>
+      <form
+        className='col-span-1 lg:col-span-2 flex flex-col gap-8'
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
         <Card>
           <CardHeader>
             <CardTitle className='text-xl'>Job Information</CardTitle>
@@ -357,8 +392,12 @@ export default function CreateJobForm() {
             />
           </CardContent>
         </Card>
-        <Button type='submit' className='w-full text-base text-white font-bold'>
-          Post job
+        <Button
+          type='submit'
+          className='w-full text-base text-white font-bold'
+          disabled={pending}
+        >
+          {pending ? 'Creating Job...' : 'Create Job'}
         </Button>
       </form>
     </Form>

@@ -1,3 +1,14 @@
+import Image from 'next/image';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import { requireUser } from '@/lib/require-user';
+import arcjetLogo from '@/public/arcjet.jpg';
+import inngestLogo from '@/public/inngest.png';
+import appleLogo from '@/public/apple.jpg';
+import amazonLogo from '@/public/amazon.png';
+import nvidiaLogo from '@/public/nvidia.png';
+import nikeLogo from '@/public/nike.png';
+
 import {
   Card,
   CardContent,
@@ -5,13 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import arcjetLogo from '@/public/arcjet.jpg';
-import inngestLogo from '@/public/inngest.png';
-import appleLogo from '@/public/apple.jpg';
-import amazonLogo from '@/public/amazon.png';
-import nvidiaLogo from '@/public/nvidia.png';
-import nikeLogo from '@/public/nike.png';
-import Image from 'next/image';
 import CreateJobForm from '@/components/forms/create-job-form';
 
 const companies = [
@@ -76,10 +80,41 @@ const stats = [
   { id: 3, value: '500+', label: 'Companies hiring remotely' },
 ];
 
-export default function PostJobPage() {
+async function getCompany(userId: string) {
+  const data = await prisma.company.findUnique({
+    where: {
+      userId: userId,
+    },
+    select: {
+      name: true,
+      location: true,
+      logo: true,
+      about: true,
+      xAccount: true,
+      website: true,
+    },
+  });
+
+  if (!data) {
+    return redirect('/');
+  }
+
+  return data;
+}
+
+export default async function PostJobPage() {
+  const session = await requireUser();
+  const data = await getCompany(session.id as string);
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5'>
-      <CreateJobForm />
+      <CreateJobForm
+        companyDescription={data.about}
+        companyName={data.name}
+        companyLocation={data.location}
+        companyLogo={data.logo}
+        companyWebsite={data.website}
+        companyXAccount={data.xAccount}
+      />
       <div className=''>
         <Card>
           <CardHeader>
