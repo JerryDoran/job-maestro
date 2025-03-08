@@ -21,6 +21,7 @@ model User {
   image               String?
   accounts            Account[]
   sessions            Session[]
+  stripeCustomerId    String?
   company             Company?
   jobseeker           JobSeeker?
   onboardingCompleted Boolean    @default(false)

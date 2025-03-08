@@ -8,6 +8,8 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import arcjet, { detectBot, shield } from '@/lib/arcjet';
 import { request } from '@arcjet/next';
+import { stripe } from '@/lib/stripe';
+import { jobListingDurationPricing } from '@/lib/pricing-tiers';
 
 const aj = arcjet
   .withRule(
@@ -102,13 +104,40 @@ export async function createJob(data: z.infer<typeof jobSchema>) {
     },
     select: {
       id: true,
+      user: {
+        select: {
+          stripeCustomerId: true,
+        },
+      },
     },
   });
 
   if (!company?.id) {
     return redirect('/');
   }
-  console.log('[COMPANY]', company);
+
+  // check if user has a stripe customer id
+  let stripeCustomerId = company.user.stripeCustomerId;
+
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: user.email as string,
+      name: user.name as string,
+    });
+
+    // we get the customer id from stripe
+    stripeCustomerId = customer.id;
+
+    // update the user with the stripe customer id
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        stripeCustomerId: stripeCustomerId,
+      },
+    });
+  }
 
   await prisma.jobPost.create({
     data: {
@@ -124,5 +153,37 @@ export async function createJob(data: z.infer<typeof jobSchema>) {
     },
   });
 
-  return redirect('/');
+  const pricingTier = jobListingDurationPricing.find(
+    (tier) => tier.days === validatedData.listingDuration
+  );
+
+  if (!pricingTier) {
+    throw new Error('Pricing tier not found');
+  }
+
+  // create stripe checkout session
+  const session = await stripe.checkout.sessions.create({
+    customer: stripeCustomerId,
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Job Posting - ${pricingTier.days} Days`,
+            description: pricingTier.description,
+            images: [
+              'https://w19mrb4744.ufs.sh/f/mXraol2CawoQK7LjYmxRnhuCfgH6P4J3jqspwi9bLz1KYZ7X',
+            ],
+          },
+          unit_amount: pricingTier.price * 100,
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/cancel`,
+  });
+
+  return redirect(session.url as string);
 }
