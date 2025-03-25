@@ -26,7 +26,7 @@ type JobCardProps = {
 
 export default function JobCard({ job }: JobCardProps) {
   return (
-    <Link href={`/job`}>
+    <Link href={`/job/${job.id}`}>
       <Card className='hover:shadow-md transition-all duration-300 hover:shadow-green-700'>
         <CardHeader>
           <div className='flex flex-col md:flex-row gap-4'>

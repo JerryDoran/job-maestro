@@ -95,7 +95,7 @@ export const sendPeriodicJobListings = inngest.createFunction(
             <h2>Latest Job Opportunities</h2>
             ${jobListingHtml}
             <div style='margin-top: 30px; text-align: center;'>
-            <a href='${process.env.NEXT_PUBLIC_URL}' style='background-color: #007bff; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px;>View more jobs</a>
+            <a href='${process.env.NEXT_PUBLIC_APP_URL}' style="background-color: #007bff; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px";>View more jobs</a>
             </div>
             </div>
             `,
@@ -103,5 +103,7 @@ export const sendPeriodicJobListings = inngest.createFunction(
         });
       }
     }
+
+    return { userId, message: 'Completed 30 day job listing notifications' };
   }
 );
