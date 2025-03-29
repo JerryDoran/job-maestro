@@ -203,3 +203,41 @@ export async function createJob(data: z.infer<typeof jobSchema>) {
 
   return redirect(session.url as string);
 }
+
+export async function saveJobPost(jobId: string) {
+  const user = await requireUser();
+
+  // arcjet
+  const req = await request();
+  const decision = await aj.protect(req);
+
+  if (decision.isDenied()) {
+    throw new Error('Forbidden');
+  }
+
+  await prisma.savedJobPost.create({
+    data: {
+      jobPostId: jobId,
+      userId: user.id as string,
+    },
+  });
+}
+
+export async function unSaveJobPost(savedJobPostId: string) {
+  const user = await requireUser();
+
+  // arcjet
+  const req = await request();
+  const decision = await aj.protect(req);
+
+  if (decision.isDenied()) {
+    throw new Error('Forbidden');
+  }
+
+  await prisma.savedJobPost.delete({
+    where: {
+      id: savedJobPostId,
+      userId: user.id,
+    },
+  });
+}

@@ -1,14 +1,48 @@
 import JsonToHtml from '@/components/json-to-html';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import arcjet, { detectBot } from '@/lib/arcjet';
 import { benefits } from '@/lib/benefits-list';
 import { getFlagEmoji } from '@/lib/countries';
 import { prisma } from '@/lib/prisma';
 import { cn } from '@/lib/utils';
-import { get } from 'http';
+import { tokenBucket } from '@/lib/arcjet';
+import { request } from '@arcjet/next';
 import { Heart } from 'lucide-react';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import Link from 'next/link';
+
+const aj = arcjet.withRule(
+  detectBot({
+    mode: 'LIVE',
+    allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:PREVIEW'],
+  })
+);
+
+function getClient(session: boolean) {
+  if (session) {
+    return aj.withRule(
+      tokenBucket({
+        mode: 'DRY_RUN',
+        capacity: 100,
+        interval: 60,
+        refillRate: 30,
+      })
+    );
+  } else {
+    return aj.withRule(
+      tokenBucket({
+        mode: 'DRY_RUN',
+        capacity: 100,
+        interval: 60,
+        refillRate: 10,
+      })
+    );
+  }
+}
 
 async function getJob(jobId: string) {
   const jobData = await prisma.jobPost.findUnique({
@@ -46,6 +80,15 @@ type Params = Promise<{ jobId: string }>;
 
 export default async function JobDetailsPage({ params }: { params: Params }) {
   const { jobId } = await params;
+
+  const session = await auth();
+  const req = await request();
+  const decision = await getClient(!!session).protect(req, { requested: 10 });
+
+  if (decision.isDenied()) {
+    throw new Error('Access denied');
+  }
+
   const job = await getJob(jobId);
 
   const locationFlag = getFlagEmoji(job.location);
@@ -76,9 +119,17 @@ export default async function JobDetailsPage({ params }: { params: Params }) {
               </Badge>
             </div>
           </div>
-          <Button variant='outline'>
-            <Heart className='size-4' /> Save Job
-          </Button>
+
+          {session?.user ? (
+            <form></form>
+          ) : (
+            <Link
+              className={buttonVariants({ variant: 'outline' })}
+              href='/login'
+            >
+              <Heart className='size-4' /> Save Job
+            </Link>
+          )}
         </div>
 
         <section className=''>
@@ -154,6 +205,41 @@ export default async function JobDetailsPage({ params }: { params: Params }) {
                   year: 'numeric',
                 })}
               </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-sm text-muted-foreground'>
+                Employment Type:
+              </span>
+              <span className='text-sm text-muted-foreground'>
+                {job.employmentType}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-sm text-muted-foreground'>Location:</span>
+              <span className='text-sm text-muted-foreground'>
+                {locationFlag && <span className='mr-1'>{locationFlag}</span>}{' '}
+                {job.location}
+              </span>
+            </div>
+          </div>
+        </Card>
+        {/* Company info card */}
+        <Card className='p-6'>
+          <div className='space-y-4'>
+            <div className='flex items-center gap-3'>
+              <Image
+                src={job.company.logo}
+                alt={job.company.name}
+                width={48}
+                height={48}
+                className='rounded-full size-12'
+              />
+              <div className='flex flex-col'>
+                <h3 className='font-semibold'>{job.company.name}</h3>
+                <p className='text-sm text-muted-foreground line-clamp-3'>
+                  {job.company.about}
+                </p>
+              </div>
             </div>
           </div>
         </Card>
