@@ -14,6 +14,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import Link from 'next/link';
+import SaveJobButton from '@/components/shared/save-job-button';
 
 const aj = arcjet.withRule(
   detectBot({
@@ -44,36 +45,76 @@ function getClient(session: boolean) {
   }
 }
 
-async function getJob(jobId: string) {
-  const jobData = await prisma.jobPost.findUnique({
-    where: {
-      status: 'ACTIVE',
-      id: jobId,
-    },
-    select: {
-      title: true,
-      jobDescription: true,
-      location: true,
-      employmentType: true,
-      benefits: true,
-      createdAt: true,
-      listingDuration: true,
-      company: {
-        select: {
-          name: true,
-          logo: true,
-          location: true,
-          about: true,
+async function getJob(jobId: string, userId?: string) {
+  // const jobData = await prisma.jobPost.findUnique({
+  //   where: {
+  //     status: 'ACTIVE',
+  //     id: jobId,
+  //   },
+  //   select: {
+  //     title: true,
+  //     jobDescription: true,
+  //     location: true,
+  //     employmentType: true,
+  //     benefits: true,
+  //     createdAt: true,
+  //     listingDuration: true,
+  //     company: {
+  //       select: {
+  //         name: true,
+  //         logo: true,
+  //         location: true,
+  //         about: true,
+  //       },
+  //     },
+  //   },
+  // });
+
+  // parallel query
+  const [jobData, savedJob] = await Promise.all([
+    await prisma.jobPost.findUnique({
+      where: {
+        status: 'ACTIVE',
+        id: jobId,
+      },
+      select: {
+        title: true,
+        jobDescription: true,
+        location: true,
+        employmentType: true,
+        benefits: true,
+        createdAt: true,
+        listingDuration: true,
+        company: {
+          select: {
+            name: true,
+            logo: true,
+            location: true,
+            about: true,
+          },
         },
       },
-    },
-  });
+    }),
+    userId
+      ? prisma.savedJobPost.findUnique({
+          where: {
+            jobPostId_userId: {
+              jobPostId: jobId,
+              userId,
+            },
+          },
+          select: {
+            id: true,
+          },
+        })
+      : null,
+  ]);
 
   if (!jobData) {
     return notFound();
   }
 
-  return jobData;
+  return { jobData, savedJob };
 }
 
 type Params = Promise<{ jobId: string }>;
@@ -89,7 +130,7 @@ export default async function JobDetailsPage({ params }: { params: Params }) {
     throw new Error('Access denied');
   }
 
-  const job = await getJob(jobId);
+  const { jobData: job, savedJob } = await getJob(jobId);
 
   const locationFlag = getFlagEmoji(job.location);
 
@@ -121,7 +162,9 @@ export default async function JobDetailsPage({ params }: { params: Params }) {
           </div>
 
           {session?.user ? (
-            <form></form>
+            <form>
+              <SaveJobButton savedJob={!!savedJob} />
+            </form>
           ) : (
             <Link
               className={buttonVariants({ variant: 'outline' })}
