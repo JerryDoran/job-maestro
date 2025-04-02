@@ -15,6 +15,7 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import Link from 'next/link';
 import SaveJobButton from '@/components/shared/save-job-button';
+import { saveJobPost, unSaveJobPost } from '@/actions';
 
 const aj = arcjet.withRule(
   detectBot({
@@ -130,7 +131,7 @@ export default async function JobDetailsPage({ params }: { params: Params }) {
     throw new Error('Access denied');
   }
 
-  const { jobData: job, savedJob } = await getJob(jobId);
+  const { jobData: job, savedJob } = await getJob(jobId, session?.user?.id);
 
   const locationFlag = getFlagEmoji(job.location);
 
@@ -162,7 +163,13 @@ export default async function JobDetailsPage({ params }: { params: Params }) {
           </div>
 
           {session?.user ? (
-            <form>
+            <form
+              action={
+                savedJob
+                  ? unSaveJobPost.bind(null, savedJob.id)
+                  : saveJobPost.bind(null, jobId)
+              }
+            >
               <SaveJobButton savedJob={!!savedJob} />
             </form>
           ) : (
