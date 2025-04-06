@@ -17,7 +17,15 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 // It is like a payload or getting metadata
 
 export const handleJobExpiration = inngest.createFunction(
-  { id: 'job-expiration' },
+  {
+    id: 'job-expiration',
+    cancelOn: [
+      {
+        event: 'job/cancel.expiration',
+        if: 'event.data.jobId == async.data.jobId',
+      },
+    ],
+  },
   { event: 'job/created' },
   async ({ event, step }) => {
     const { jobId, expirationDays } = event.data;

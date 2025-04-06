@@ -35,6 +35,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import CopyUrl from '@/components/shared/copy-url';
 
 async function getMyJobs(userId: string) {
   const data = await prisma.jobPost.findMany({
@@ -140,12 +141,9 @@ export default async function MyJobsPage() {
                               Edit Job
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild className='cursor-pointer'>
-                            <Link href={`/my-jobs/${listing.id}/edit`}>
-                              <CopyCheckIcon />
-                              Copy Job URL
-                            </Link>
-                          </DropdownMenuItem>
+                          <CopyUrl
+                            jobUrl={`${process.env.NEXT_PUBLIC_APP_URL}/job/${listing.id}`}
+                          />
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild className='cursor-pointer'>
                             <Link

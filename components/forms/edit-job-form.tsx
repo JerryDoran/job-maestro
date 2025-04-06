@@ -32,6 +32,7 @@ import { Textarea } from '../ui/textarea';
 import { UploadDropzone } from '@/components/shared/uploadthing';
 import { XIcon } from 'lucide-react';
 import { Button } from '../ui/button';
+import { editJobPost } from '@/actions';
 
 type EditJobFormProps = {
   jobPost: {
@@ -77,10 +78,10 @@ export default function EditJobForm({ jobPost }: EditJobFormProps) {
     },
   });
 
-  async function onSubmit(data: z.infer<typeof jobSchema>) {
+  async function onSubmit(values: z.infer<typeof jobSchema>) {
     try {
       setPending(true);
-      await createJob(data);
+      await editJobPost(values, jobPost.id);
     } catch (error) {
       if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
         console.log('[ERROR]: Something went wrong!');
@@ -92,7 +93,7 @@ export default function EditJobForm({ jobPost }: EditJobFormProps) {
   return (
     <Form {...form}>
       <form
-        className='col-span-1 lg:col-span-2 flex flex-col gap-8 pb-6'
+        className='col-span-1 lg:col-span-2 flex flex-col gap-8'
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <Card>
@@ -382,7 +383,7 @@ export default function EditJobForm({ jobPost }: EditJobFormProps) {
           className='w-full text-base text-white font-bold'
           disabled={pending}
         >
-          {pending ? 'Creating Job...' : 'Create Job'}
+          {pending ? 'Editing Job...' : 'Edit Job'}
         </Button>
       </form>
     </Form>
