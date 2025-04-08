@@ -28,16 +28,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import {
-  CopyCheckIcon,
-  MoreHorizontal,
-  PenBoxIcon,
-  XCircle,
-} from 'lucide-react';
+import { MoreHorizontal, PenBoxIcon, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import CopyUrl from '@/components/shared/copy-url';
 
 async function getMyJobs(userId: string) {
+  await new Promise((resolve) => setTimeout(resolve, 5000));
   const data = await prisma.jobPost.findMany({
     where: {
       company: {
@@ -66,7 +62,7 @@ async function getMyJobs(userId: string) {
 
 export default async function MyJobsPage() {
   const session = await requireUser();
-
+  
   const myJobs = await getMyJobs(session.id as string);
 
   return (
@@ -116,7 +112,7 @@ export default async function MyJobsPage() {
                       {listing.status === 'ACTIVE' ? (
                         <span className='text-green-500 '>Active</span>
                       ) : (
-                        <span className='text-red-500'>Inactive</span>
+                        <span className='text-red-500'>Draft</span>
                       )}
                     </TableCell>
                     <TableCell>

@@ -1,6 +1,7 @@
 import JobFilters from '@/components/job-filters';
 import JobListings from '@/components/job-listings';
-import { Card } from '@/components/ui/card';
+import JobListingSkeleton from '@/components/shared/job-listing-skeleton';
+import { Suspense } from 'react';
 
 export default function Home() {
   return (
@@ -10,7 +11,10 @@ export default function Home() {
 
       {/* Job List */}
       <div className='col-span-2 flex flex-col gap-6'>
-        <JobListings />
+        <JobListingSkeleton />
+        <Suspense fallback={<JobListingSkeleton />}>
+          {/* <JobListings /> */}
+        </Suspense>
       </div>
     </div>
   );
