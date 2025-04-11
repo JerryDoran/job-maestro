@@ -11,9 +11,9 @@ export default function Home() {
 
       {/* Job List */}
       <div className='col-span-2 flex flex-col gap-6'>
-        <JobListingSkeleton />
+        {/* <JobListingSkeleton /> */}
         <Suspense fallback={<JobListingSkeleton />}>
-          {/* <JobListings /> */}
+          <JobListings />
         </Suspense>
       </div>
     </div>
