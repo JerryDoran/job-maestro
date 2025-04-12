@@ -1,45 +1,59 @@
 import { prisma } from '@/lib/prisma';
 import EmptyState from './empty-state';
 import JobCard from './job-card';
+import MainPagination from '@/components/shared/main-pagination';
 
-async function getJobListings() {
-  const data = await prisma.jobPost.findMany({
-    where: {
-      status: 'ACTIVE',
-    },
-    select: {
-      title: true,
-      id: true,
-      salaryFrom: true,
-      salaryTo: true,
-      employmentType: true,
-      location: true,
-      createdAt: true,
-      company: {
-        select: {
-          name: true,
-          logo: true,
-          location: true,
-          about: true,
+async function getJobListings(page: number = 1, pageSize: number = 4) {
+  const [data, totalCount] = await Promise.all([
+    prisma.jobPost.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+      select: {
+        title: true,
+        id: true,
+        salaryFrom: true,
+        salaryTo: true,
+        employmentType: true,
+        location: true,
+        createdAt: true,
+        company: {
+          select: {
+            name: true,
+            logo: true,
+            location: true,
+            about: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+      orderBy: {
+        createdAt: 'desc',
+      },
+    }),
+    prisma.jobPost.count({
+      where: {
+        status: 'ACTIVE',
+      },
+    }),
+  ]);
 
-  return data;
+  return { jobs: data, totalPages: Math.ceil(totalCount / pageSize) };
 }
 
-export default async function JobListings() {
-  const listings = await getJobListings();
+export default async function JobListings({
+  currentPage,
+}: {
+  currentPage: number;
+}) {
+  const { jobs, totalPages } = await getJobListings(currentPage);
 
   return (
     <>
-      {listings.length > 0 ? (
+      {jobs.length > 0 ? (
         <div className='flex flex-col gap-6'>
-          {listings.map((job) => (
+          {jobs.map((job) => (
             <JobCard key={job.id} job={job} />
           ))}
         </div>
@@ -51,6 +65,10 @@ export default async function JobListings() {
           href='/'
         />
       )}
+
+      <div className='flex justify-center mt-6'>
+        <MainPagination totalPages={totalPages} currentPage={currentPage} />
+      </div>
     </>
   );
 }
