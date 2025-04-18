@@ -1,3 +1,7 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 import { XIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,11 +22,60 @@ import { countryList } from '@/lib/countries';
 const jobTypes = ['full-time', 'part-time', 'contract', 'internship'];
 
 export default function JobFilters() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // get current filters from url
+  const currentJobTypes = searchParams.get('jobTypes')?.split(',') || [];
+
+  const currentLocation = searchParams.get('location') || '';
+
+  function clearFilters() {
+    router.push('/');
+  }
+
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (value) {
+        params.set(name, value);
+      } else {
+        params.delete(name);
+      }
+
+      return params.toString();
+    },
+    [searchParams]
+  );
+
+  function handleJobTypeChange(jobType: string, checked: boolean) {
+    const current = new Set(currentJobTypes);
+
+    if (checked) {
+      current.add(jobType);
+    } else {
+      current.delete(jobType);
+    }
+
+    const newValue = Array.from(current).join(',');
+
+    router.push(`?${createQueryString('jobTypes', newValue)}`);
+  }
+
+  function handleLocationChange(location: string) {
+    router.push(`?${createQueryString('location', location)}`);
+  }
   return (
     <Card className='col-span-2 lg:col-span-1 h-fit'>
       <CardHeader className='flex flex-row justify-between items-center'>
         <CardTitle className='text-2xl font-semibold'>Job Filters</CardTitle>
-        <Button size='sm' variant='destructive' className='h-8'>
+        <Button
+          size='sm'
+          variant='destructive'
+          className='h-8'
+          onClick={clearFilters}
+        >
           <span>Clear all</span>
           <XIcon className='size-4 text-white' />
         </Button>
@@ -34,7 +87,13 @@ export default function JobFilters() {
           <div className='grid grid-cols-2 gap-4'>
             {jobTypes.map((jobType, index) => (
               <div className='flex items-center space-x-2 ' key={index}>
-                <Checkbox id={jobType} />
+                <Checkbox
+                  onCheckedChange={(checked) =>
+                    handleJobTypeChange(jobType, checked as boolean)
+                  }
+                  id={jobType}
+                  checked={currentJobTypes.includes(jobType)}
+                />
                 <Label htmlFor={jobType} className='text-sm font-medium'>
                   {jobType}
                 </Label>
@@ -46,7 +105,10 @@ export default function JobFilters() {
 
         <div className='space-y-2'>
           <Label className='text-lg font-semibold'>Location</Label>
-          <Select>
+          <Select
+            value={currentLocation}
+            onValueChange={(location) => handleLocationChange(location)}
+          >
             <SelectTrigger>
               <SelectValue placeholder='Select a location' />
             </SelectTrigger>
