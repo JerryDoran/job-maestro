@@ -18,6 +18,9 @@ export default async function Home({ searchParams }: SearchParams) {
   const jobTypes = params.jobTypes?.split(',') || [];
   const location = params.location || '';
 
+  const filterKey = `page=${currentPage};types=${jobTypes.join(
+    ','
+  )};location=${location}`;
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
       {/* Job Filters */}
@@ -26,7 +29,7 @@ export default async function Home({ searchParams }: SearchParams) {
       {/* Job List */}
       <div className='col-span-2 flex flex-col gap-6'>
         {/* <JobListingSkeleton /> */}
-        <Suspense fallback={<JobListingSkeleton />} key={currentPage}>
+        <Suspense fallback={<JobListingSkeleton />} key={filterKey}>
           <JobListings
             currentPage={currentPage}
             jobTypes={jobTypes}

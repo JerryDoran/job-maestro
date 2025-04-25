@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { requireUser } from '@/lib/require-user';
 import { XIcon } from 'lucide-react';
 import Link from 'next/link';
 
-export default function CancelSuccessPage() {
+export default async function CancelSuccessPage() {
+  await requireUser();
   return (
     <div className='w-full min-h-screen flex flex-1 justify-center items-center'>
       <Card className='w-[350px]'>

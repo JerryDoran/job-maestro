@@ -10,7 +10,6 @@ type SalaryRangeSelectorProps = {
   minSalary: number;
   maxSalary: number;
   step: number;
-  currency: string;
 };
 
 export default function SalaryRangeSelector({
@@ -18,7 +17,6 @@ export default function SalaryRangeSelector({
   minSalary,
   maxSalary,
   step,
-  currency,
 }: SalaryRangeSelectorProps) {
   const { field: fromField } = useController({
     name: 'salaryFrom',

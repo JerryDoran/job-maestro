@@ -188,7 +188,6 @@ export default function CreateJobForm({
                     minSalary={10000}
                     maxSalary={1000000}
                     step={2000}
-                    currency='USD'
                   />
                 </FormControl>
               </FormItem>
